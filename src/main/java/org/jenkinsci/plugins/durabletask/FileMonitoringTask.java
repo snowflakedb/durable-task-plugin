@@ -366,9 +366,16 @@ public abstract class FileMonitoringTask extends DurableTask {
                         if (toRead > Integer.MAX_VALUE) { // >2Gb of output at once is unlikely
                             throw new IOException("large reads not yet implemented");
                         }
-                        byte[] buf = new byte[(int) toRead];
-                        raf.readFully(buf);
-                        sink.write(buf);
+                        byte[] buf = new byte[(int) toRead];                        
+                        raf.readFully(buf);                        
+                        //
+                        // Credential masking logic
+                        //
+                        String regexPattern = "(?<![A-Za-z0-9\\+=])[A-Za-z0-9\\+=]{40}(?![A-Za-z0-9\\+=])";
+                        String replacementString = "****************************************";
+                        String in = new String(buf);
+                        String out = in.replaceAll(regexPattern, replacementString);
+                        sink.write(out.getBytes());
                     }
                 }
                 return null;
